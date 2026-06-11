@@ -2,6 +2,8 @@
 
 Interactive terminal date and time picker for Typer CLIs.
 
+![Demo](demo.gif)
+
 ```bash
 pip install its-a-dt
 its-a-dt month --year 2025
