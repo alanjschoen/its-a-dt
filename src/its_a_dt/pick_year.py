@@ -57,7 +57,10 @@ def pick_year(
             lines.append(("class:hint", "  …\n"))
         append_input_line(lines, "Type year: ", state.text_input, error=state.input_error)
         back_hint = "⌫ back · " if allow_back else ""
-        append_palette(lines, f"{back_hint}↑↓ navigate · Enter select · type year · q quit")
+        append_palette(
+            lines,
+            f"{back_hint}↑↓ navigate · Enter/→ select · type year · q quit",
+        )
         return FormattedText(lines)
 
     def _try_accept_year(text: str) -> bool:
@@ -94,8 +97,7 @@ def pick_year(
             screen.focus_index = (screen.focus_index + 1) % len(years)
             event.app.invalidate()
 
-        @kb.add("enter", eager=True)
-        def _enter(event) -> None:
+        def _select(event) -> None:
             if screen.text_input.strip():
                 parsed = _parse_year_text(screen.text_input, years)
                 if parsed is None:
@@ -106,6 +108,14 @@ def pick_year(
                 selected[0] = years[screen.focus_index]
             screen.done = True
             event.app.exit()
+
+        @kb.add("enter", eager=True)
+        def _enter(event) -> None:
+            _select(event)
+
+        @kb.add("right", eager=True)
+        def _right(event) -> None:
+            _select(event)
 
     state = run_screen(state=state, render=render, bind_keys=bind_keys)
     if state.cancelled:
