@@ -150,11 +150,14 @@ def _run_datetime(
     hours: Optional[str],
     interval: Optional[str],
     default: Optional[str],
+    eager: bool = False,
 ) -> None:
     bounds = _datetime_bounds(
         min_value, max_value, days_of_week, days_of_month, hours, interval
     )
-    _handle_cancelled(lambda: pick_datetime(bounds=bounds, default=_parse_bound(default)))
+    _handle_cancelled(
+        lambda: pick_datetime(bounds=bounds, default=_parse_bound(default), eager=eager)
+    )
 
 
 @app.callback(invoke_without_command=True)
@@ -167,6 +170,7 @@ def main(
     hours: Optional[str] = typer.Option(None, "--hours"),
     interval: Optional[str] = typer.Option(None, "--interval"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Run the full datetime picker when no subcommand is given."""
     if ctx.invoked_subcommand is not None:
@@ -180,6 +184,7 @@ def main(
         hours=hours,
         interval=interval,
         default=default,
+        eager=eager,
     )
 
 
@@ -188,13 +193,16 @@ def year(
     min_value: Optional[str] = typer.Option(None, "--min"),
     max_value: Optional[str] = typer.Option(None, "--max"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a year."""
     _require_tty()
     bounds = _range_bounds(min_value, max_value)
     default_year = int(default) if default else None
     _handle_cancelled(
-        lambda: pick_year(bounds=bounds, default=default_year, allow_back=False)
+        lambda: pick_year(
+            bounds=bounds, default=default_year, allow_back=False, eager=eager
+        )
     )
 
 
@@ -204,6 +212,7 @@ def month(
     min_value: Optional[str] = typer.Option(None, "--min"),
     max_value: Optional[str] = typer.Option(None, "--max"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a month."""
     _require_tty()
@@ -215,6 +224,7 @@ def month(
             bounds=bounds if year is not None else None,
             default=default_month,
             allow_back=False,
+            eager=eager,
         )
     )
 
@@ -228,6 +238,7 @@ def day(
     days_of_week: Optional[str] = typer.Option(None, "--days-of-week"),
     days_of_month: Optional[str] = typer.Option(None, "--days-of-month"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a day."""
     _require_tty()
@@ -240,6 +251,7 @@ def day(
             bounds=bounds,
             default=default_day,
             allow_back=False,
+            eager=eager,
         )
     )
 
@@ -256,6 +268,7 @@ def time_cmd(
         help="Minute/hour step: 15min, 30min, 1hr, 2hr, ...",
     ),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a time."""
     _require_tty()
@@ -266,6 +279,7 @@ def time_cmd(
             on_date=_parse_date(on_date),
             default=_parse_time(default),
             allow_back=False,
+            eager=eager,
         )
     )
 
@@ -277,11 +291,14 @@ def date_cmd(
     days_of_week: Optional[str] = typer.Option(None, "--days-of-week"),
     days_of_month: Optional[str] = typer.Option(None, "--days-of-month"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a full date (year, month, day)."""
     _require_tty()
     bounds = _day_bounds(min_value, max_value, days_of_week, days_of_month)
-    _handle_cancelled(lambda: pick_date(bounds=bounds, default=_parse_date(default)))
+    _handle_cancelled(
+        lambda: pick_date(bounds=bounds, default=_parse_date(default), eager=eager)
+    )
 
 
 @app.command("datetime")
@@ -293,6 +310,7 @@ def datetime_picker(
     hours: Optional[str] = typer.Option(None, "--hours"),
     interval: Optional[str] = typer.Option(None, "--interval"),
     default: Optional[str] = typer.Option(None, "--default", "-d"),
+    eager: bool = typer.Option(False, "--eager"),
 ) -> None:
     """Pick a full datetime."""
     _require_tty()
@@ -304,6 +322,7 @@ def datetime_picker(
         hours=hours,
         interval=interval,
         default=default,
+        eager=eager,
     )
 
 

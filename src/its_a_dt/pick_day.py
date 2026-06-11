@@ -17,8 +17,10 @@ from its_a_dt.screen import (
     append_grid_row,
     append_input_line,
     append_palette,
+    bind_digit_input,
     bind_quit,
     bind_text_input,
+    reject_input,
     list_focus_index,
     run_screen,
 )
@@ -48,6 +50,7 @@ def pick_day(
     default: Optional[int] = None,
     title: str = "Select day",
     allow_back: bool = True,
+    eager: bool = False,
 ) -> Union[int, type[GoBack]]:
     """Pick a day of month within the given year and month."""
     effective_bounds = bounds or Bounds()
@@ -87,7 +90,7 @@ def pick_day(
                 else:
                     row_cells.append(("", f"{day:>3}"))
             append_grid_row(lines, row_cells)
-        append_input_line(lines, "Type day: ", state.text_input)
+        append_input_line(lines, "Type day: ", state.text_input, error=state.input_error)
         back_hint = "⌫ back · " if allow_back else ""
         append_palette(
             lines,
@@ -95,8 +98,26 @@ def pick_day(
         )
         return FormattedText(lines)
 
+    def _try_accept_day(text: str) -> bool:
+        parsed = _parse_day_text(text, year, month, effective_bounds)
+        if parsed is None:
+            return False
+        selected[0] = parsed
+        return True
+
     def bind_keys(kb: KeyBindings, screen: ScreenState) -> None:
-        bind_text_input(kb, screen, back_on_empty=allow_back)
+        if eager:
+            bind_digit_input(
+                kb,
+                screen,
+                max_length=2,
+                back_on_empty=allow_back,
+                eager=True,
+                is_complete=_day_entry_complete,
+                try_accept=_try_accept_day,
+            )
+        else:
+            bind_text_input(kb, screen, back_on_empty=allow_back)
         bind_quit(kb, screen)
 
         @kb.add("up", eager=True)
@@ -125,8 +146,7 @@ def pick_day(
             if cleaned:
                 parsed = _parse_day_text(cleaned, year, month, effective_bounds)
                 if parsed is None:
-                    screen.text_input = ""
-                    event.app.invalidate()
+                    reject_input(screen, event, eager=eager)
                     return
                 selected[0] = parsed
             else:
@@ -139,6 +159,12 @@ def pick_day(
     if state.go_back:
         return GoBack
     return selected[0]
+
+
+def _day_entry_complete(text: str) -> bool:
+    if len(text) == 2:
+        return True
+    return len(text) == 1 and text[0] in "456789"
 
 
 def _parse_day_text(text: str, year: int, month: int, bounds: Bounds) -> Optional[int]:

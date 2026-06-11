@@ -14,6 +14,7 @@ from its_a_dt.bounds import (
     parse_interval,
     parse_days_of_week,
     time_allowed,
+    unique_month_prefix,
 )
 
 
@@ -64,3 +65,19 @@ def test_parse_helpers() -> None:
     assert parse_days_of_week("mon,wed") == frozenset({0, 2})
     assert parse_hour_list("9-11,15") == frozenset({9, 10, 11, 15})
     assert parse_days_of_month("1,15") == frozenset({1, 15})
+
+
+def test_unique_month_prefix() -> None:
+    assert unique_month_prefix("f") == 2
+    assert unique_month_prefix("jul") == 7
+    assert unique_month_prefix("j") is None
+    assert unique_month_prefix("ju") is None
+    assert unique_month_prefix("ja") == 1
+    assert unique_month_prefix("ma") is None
+    assert unique_month_prefix("mar") == 3
+    assert unique_month_prefix("may") == 5
+    assert unique_month_prefix("1") is None
+    assert unique_month_prefix("10") == 10
+    assert unique_month_prefix("2") == 2
+    assert unique_month_prefix("ju", frozenset({6, 7})) is None
+    assert unique_month_prefix("jul", frozenset({6, 7})) == 7

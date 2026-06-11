@@ -7,8 +7,15 @@ from typing import Optional, Union
 
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
 
-from its_a_dt.bounds import Bounds, allowed_months, month_allowed, parse_month_text
+from its_a_dt.bounds import (
+    Bounds,
+    allowed_months,
+    month_allowed,
+    parse_month_text,
+    unique_month_prefix,
+)
 from its_a_dt.screen import (
     Cancelled,
     GoBack,
@@ -18,6 +25,7 @@ from its_a_dt.screen import (
     append_palette,
     bind_quit,
     bind_text_input,
+    reject_input,
     list_focus_index,
     run_screen,
 )
@@ -45,6 +53,7 @@ def pick_month(
     default: Optional[int] = None,
     title: str = "Select month",
     allow_back: bool = True,
+    eager: bool = False,
 ) -> Union[int, type[GoBack]]:
     """Pick a month (1-12). Year is only used when applying date-range bounds."""
     effective_bounds = bounds or Bounds()
@@ -78,7 +87,7 @@ def pick_month(
                 else:
                     row_cells.append(("", label))
             append_grid_row(lines, row_cells)
-        append_input_line(lines, "Type month: ", state.text_input)
+        append_input_line(lines, "Type month: ", state.text_input, error=state.input_error)
         back_hint = "⌫ back · " if allow_back else ""
         append_palette(
             lines,
@@ -86,8 +95,28 @@ def pick_month(
         )
         return FormattedText(lines)
 
+    enabled_set = frozenset(enabled)
+
+    def _month_allowed(month: int) -> bool:
+        return year is None or month_allowed(year, month, effective_bounds)
+
+    def _try_accept_month(text: str) -> bool:
+        month = unique_month_prefix(text, enabled_set)
+        if month is None or not _month_allowed(month):
+            return False
+        selected[0] = month
+        return True
+
     def bind_keys(kb: KeyBindings, screen: ScreenState) -> None:
-        bind_text_input(kb, screen, back_on_empty=allow_back)
+        if eager:
+            _bind_month_input(
+                kb,
+                screen,
+                back_on_empty=allow_back,
+                try_accept=_try_accept_month,
+            )
+        else:
+            bind_text_input(kb, screen, back_on_empty=allow_back)
         bind_quit(kb, screen)
 
         @kb.add("up", eager=True)
@@ -116,12 +145,10 @@ def pick_month(
             if cleaned:
                 month = parse_month_text(cleaned)
                 if month is None or month not in enabled:
-                    screen.text_input = ""
-                    event.app.invalidate()
+                    reject_input(screen, event, eager=eager)
                     return
-                if year is not None and not month_allowed(year, month, effective_bounds):
-                    screen.text_input = ""
-                    event.app.invalidate()
+                if not _month_allowed(month):
+                    reject_input(screen, event, eager=eager)
                     return
                 selected[0] = month
             else:
@@ -134,6 +161,45 @@ def pick_month(
     if state.go_back:
         return GoBack
     return selected[0]
+
+
+def _bind_month_input(
+    kb: KeyBindings,
+    screen: ScreenState,
+    *,
+    back_on_empty: bool,
+    try_accept,
+) -> None:
+    _MAX_MONTH_INPUT = 9
+
+    @kb.add("backspace", eager=True)
+    def _backspace(event) -> None:
+        if screen.text_input:
+            screen.text_input = screen.text_input[:-1]
+            screen.input_error = False
+            event.app.invalidate()
+            return
+        if back_on_empty:
+            screen.go_back = True
+            event.app.exit()
+
+    @kb.add(Keys.Any, eager=True)
+    def _type(event) -> object:
+        char = event.data
+        if len(char) != 1 or not char.isprintable():
+            return NotImplemented
+        if char in "qQ":
+            return NotImplemented
+        if not char.isalnum():
+            return NotImplemented
+        if len(screen.text_input) >= _MAX_MONTH_INPUT:
+            return None
+        screen.text_input += char.lower()
+        screen.input_error = False
+        if try_accept(screen.text_input):
+            event.app.exit()
+        event.app.invalidate()
+        return None
 
 
 def _move_grid_focus(

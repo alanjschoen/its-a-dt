@@ -15,8 +15,10 @@ from its_a_dt.screen import (
     ScreenState,
     append_input_line,
     append_palette,
+    bind_digit_input,
     bind_quit,
     bind_text_input,
+    reject_input,
     list_focus_index,
     run_screen,
     visible_indices,
@@ -29,6 +31,7 @@ def pick_year(
     default: Optional[int] = None,
     title: str = "Select year",
     allow_back: bool = True,
+    eager: bool = False,
 ) -> Union[int, type[GoBack]]:
     """Pick a year. Returns the selected year or GoBack."""
     effective_bounds = bounds or Bounds()
@@ -52,21 +55,34 @@ def pick_year(
             lines.append((style, f"{marker}{year}\n"))
         if end < len(years):
             lines.append(("class:hint", "  …\n"))
-        append_input_line(lines, "Type year: ", state.text_input)
-        back_hint = "← back · " if allow_back else ""
+        append_input_line(lines, "Type year: ", state.text_input, error=state.input_error)
+        back_hint = "⌫ back · " if allow_back else ""
         append_palette(lines, f"{back_hint}↑↓ navigate · Enter select · type year · q quit")
         return FormattedText(lines)
 
+    def _try_accept_year(text: str) -> bool:
+        parsed = _parse_year_text(text, years)
+        if parsed is None:
+            return False
+        selected[0] = parsed
+        return True
+
     def bind_keys(kb: KeyBindings, screen: ScreenState) -> None:
-        bind_text_input(kb, screen, digits_only=True, max_length=4)
+        if eager:
+            bind_digit_input(
+                kb,
+                screen,
+                max_length=4,
+                back_on_empty=allow_back,
+                eager=True,
+                is_complete=lambda text: len(text) == 4,
+                try_accept=_try_accept_year,
+            )
+        else:
+            bind_text_input(
+                kb, screen, digits_only=True, max_length=4, back_on_empty=allow_back
+            )
         bind_quit(kb, screen)
-
-        if allow_back:
-
-            @kb.add("left", eager=True)
-            def _back(event) -> None:
-                screen.go_back = True
-                event.app.exit()
 
         @kb.add("up", eager=True)
         def _up(event) -> None:
@@ -83,8 +99,7 @@ def pick_year(
             if screen.text_input.strip():
                 parsed = _parse_year_text(screen.text_input, years)
                 if parsed is None:
-                    screen.text_input = ""
-                    event.app.invalidate()
+                    reject_input(screen, event, eager=eager)
                     return
                 selected[0] = parsed
             else:

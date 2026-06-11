@@ -186,6 +186,33 @@ def parse_month_text(text: str) -> Optional[int]:
     return _MONTH_NAMES.get(cleaned)
 
 
+def unique_month_prefix(
+    text: str,
+    enabled: Optional[frozenset[int]] = None,
+) -> Optional[int]:
+    """Return the month when text uniquely identifies one month by prefix."""
+    cleaned = text.strip().lower()
+    if not cleaned:
+        return None
+    months = range(1, 13) if enabled is None else sorted(enabled)
+    matches = [
+        month for month in months if _month_matches_prefix(month, cleaned)
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
+def _month_matches_prefix(month: int, prefix: str) -> bool:
+    if prefix.isdigit():
+        return str(month).startswith(prefix)
+    return any(
+        name.startswith(prefix)
+        for name, mapped_month in _MONTH_NAMES.items()
+        if mapped_month == month
+    )
+
+
 def minutes_locked(bounds: Bounds) -> bool:
     return bounds.hour_step_minutes is not None and bounds.hour_step_minutes >= 60
 

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Callable, Literal, Optional
 
 from prompt_toolkit.application import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -26,8 +28,11 @@ STYLE = Style.from_dict(
         "palette": "#888888",
         "hint": "#666666",
         "input": "underline",
+        "input-error": "underline ansired",
     }
 )
+
+_INPUT_ERROR_FLASH_SECONDS = 0.2
 
 
 class GoBack(Exception):
@@ -42,10 +47,12 @@ class Cancelled(Exception):
 class ScreenState:
     focus_index: int = 0
     text_input: str = ""
+    field_input: str = ""
     time_field: Literal["hour", "minute"] = "hour"
     go_back: bool = False
     cancelled: bool = False
     done: bool = False
+    input_error: bool = False
 
 
 def run_screen(
@@ -94,9 +101,85 @@ def visible_indices(length: int, focus_index: int, *, window_size: int = 11) -> 
     return start, end
 
 
-def append_input_line(lines: list[tuple[str, str]], prompt: str, text: str) -> None:
+def reject_input(
+    screen: ScreenState,
+    event,
+    *,
+    eager: bool = False,
+    field: bool = False,
+) -> None:
+    """Briefly highlight invalid input. Eager mode clears; standard mode keeps text."""
+    if eager:
+        if field:
+            screen.field_input = ""
+        else:
+            screen.text_input = ""
+    screen.input_error = True
+    event.app.invalidate()
+
+    async def _clear_error() -> None:
+        await asyncio.sleep(_INPUT_ERROR_FLASH_SECONDS)
+        screen.input_error = False
+        get_app().invalidate()
+
+    event.app.create_background_task(_clear_error())
+
+
+def bind_digit_input(
+    kb: KeyBindings,
+    screen: ScreenState,
+    *,
+    max_length: int,
+    back_on_empty: bool = False,
+    eager: bool = False,
+    is_complete: Callable[[str], bool],
+    try_accept: Callable[[str], bool],
+) -> None:
+    """Digit-only input line with optional eager auto-accept when complete."""
+
+    @kb.add("backspace", eager=True)
+    def _backspace(event) -> None:
+        if screen.text_input:
+            screen.text_input = screen.text_input[:-1]
+            screen.input_error = False
+            event.app.invalidate()
+            return
+        if back_on_empty:
+            screen.go_back = True
+            event.app.exit()
+
+    @kb.add(Keys.Any, eager=True)
+    def _type(event) -> object:
+        char = event.data
+        if len(char) != 1 or not char.isprintable():
+            return NotImplemented
+        if char in _RESERVED_TEXT_KEYS:
+            return NotImplemented
+        if not char.isdigit():
+            return NotImplemented
+        if len(screen.text_input) >= max_length:
+            return None
+        screen.text_input += char
+        screen.input_error = False
+        if eager and is_complete(screen.text_input):
+            if try_accept(screen.text_input):
+                event.app.exit()
+            else:
+                reject_input(screen, event, eager=True)
+        event.app.invalidate()
+        return None
+
+
+def append_input_line(
+    lines: list[tuple[str, str]],
+    prompt: str,
+    text: str,
+    *,
+    error: bool = False,
+) -> None:
+    style = "class:input-error" if error else "class:input"
     lines.append(("", "\n"))
-    lines.append(("class:input", f"{prompt}{text}█\n"))
+    lines.append((style, f"{prompt}{text}█\n"))
 
 
 def append_palette(lines: list[tuple[str, str]], text: str) -> None:
@@ -138,13 +221,14 @@ def bind_text_input(
     def _backspace(event) -> None:
         if screen.text_input:
             screen.text_input = screen.text_input[:-1]
+            screen.input_error = False
             event.app.invalidate()
             return
         if back_on_empty:
             screen.go_back = True
             event.app.exit()
 
-    @kb.add(Keys.Any)
+    @kb.add(Keys.Any, eager=True)
     def _maybe_type(event) -> object:
         char = event.data
         if len(char) != 1 or not char.isprintable():
@@ -158,4 +242,6 @@ def bind_text_input(
         if max_length is not None and len(screen.text_input) >= max_length:
             return None
         screen.text_input += char
+        screen.input_error = False
+        event.app.invalidate()
         return None
