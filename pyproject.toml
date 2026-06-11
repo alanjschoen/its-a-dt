@@ -1,26 +1,62 @@
 [project]
-name = "datepicker"
+name = "its-a-dt"
 version = "0.1.0"
 description = "Interactive terminal date and time picker for Typer CLIs"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
+authors = [
+    { name = "Alan Schoen", email = "aschoen@runetech.co" },
+]
+keywords = ["cli", "date", "datetime", "time", "picker", "typer", "tui", "terminal"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: User Interfaces",
+    "Typing :: Typed",
+]
 dependencies = [
     "prompt-toolkit>=3.0.0",
     "typer>=0.12.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/alanschoen/its-a-dt"
+Repository = "https://github.com/alanschoen/its-a-dt"
+Issues = "https://github.com/alanschoen/its-a-dt/issues"
+
 [project.scripts]
-datepicker-demo = "datepicker.demo:main_entry"
+its-a-dt = "its_a_dt.demo:main_entry"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "hatch>=1.9.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/its_a_dt"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+]

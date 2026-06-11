@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from datepicker.bounds import Bounds
-from datepicker.screen import list_focus_index
+from its_a_dt.bounds import Bounds
+from its_a_dt.screen import list_focus_index
 
 
 def test_list_focus_index_defaults_to_nearest() -> None:

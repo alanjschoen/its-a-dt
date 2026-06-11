@@ -9,8 +9,8 @@ from typing import Optional, Union
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 
-from datepicker.bounds import Bounds, allowed_days, date_allowed
-from datepicker.screen import (
+from its_a_dt.bounds import Bounds, allowed_days, date_allowed
+from its_a_dt.screen import (
     Cancelled,
     GoBack,
     ScreenState,

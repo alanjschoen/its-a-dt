@@ -9,7 +9,7 @@ from typing import Optional, Union
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 
-from datepicker.bounds import (
+from its_a_dt.bounds import (
     Bounds,
     allowed_hours,
     allowed_minutes,
@@ -17,7 +17,7 @@ from datepicker.bounds import (
     minutes_locked,
     time_allowed,
 )
-from datepicker.screen import (
+from its_a_dt.screen import (
     Cancelled,
     GoBack,
     ScreenState,

@@ -1,4 +1,4 @@
-"""Demo CLI for exercising the datepicker interactively."""
+"""Demo CLI for exercising its-a-dt interactively."""
 
 from __future__ import annotations
 
@@ -8,19 +8,19 @@ from typing import Optional, Union
 
 import typer
 
-from datepicker.bounds import (
+from its_a_dt.bounds import (
     Bounds,
     parse_days_of_month,
     parse_hour_list,
     parse_interval,
     parse_days_of_week,
 )
-from datepicker.compose import pick_date, pick_datetime
-from datepicker.pick_day import pick_day
-from datepicker.pick_month import pick_month
-from datepicker.pick_time import pick_time
-from datepicker.pick_year import pick_year
-from datepicker.screen import Cancelled, GoBack
+from its_a_dt.compose import pick_date, pick_datetime
+from its_a_dt.pick_day import pick_day
+from its_a_dt.pick_month import pick_month
+from its_a_dt.pick_time import pick_time
+from its_a_dt.pick_year import pick_year
+from its_a_dt.screen import Cancelled, GoBack
 
 app = typer.Typer(
     add_completion=False,
@@ -31,7 +31,7 @@ app = typer.Typer(
 
 def _require_tty() -> None:
     if not sys.stdin.isatty():
-        typer.echo("datepicker-demo requires an interactive terminal.", err=True)
+        typer.echo("its-a-dt requires an interactive terminal.", err=True)
         raise typer.Exit(code=1)
 
 

@@ -13,8 +13,8 @@ from prompt_toolkit.layout.layout import Window
 from prompt_toolkit.output import DummyOutput
 from prompt_toolkit.patch_stdout import patch_stdout
 
-from datepicker.pick_month import _move_grid_focus
-from datepicker.screen import ScreenState, append_grid_row, bind_quit, bind_text_input
+from its_a_dt.pick_month import _move_grid_focus
+from its_a_dt.screen import ScreenState, append_grid_row, bind_quit, bind_text_input
 
 
 def test_append_grid_row_preserves_cell_styles() -> None:

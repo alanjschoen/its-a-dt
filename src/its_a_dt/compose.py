@@ -5,12 +5,12 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Optional, Union
 
-from datepicker.bounds import Bounds, date_allowed, datetime_allowed
-from datepicker.pick_day import pick_day
-from datepicker.pick_month import pick_month
-from datepicker.pick_time import pick_time
-from datepicker.pick_year import pick_year
-from datepicker.screen import GoBack
+from its_a_dt.bounds import Bounds, date_allowed, datetime_allowed
+from its_a_dt.pick_day import pick_day
+from its_a_dt.pick_month import pick_month
+from its_a_dt.pick_time import pick_time
+from its_a_dt.pick_year import pick_year
+from its_a_dt.screen import GoBack
 
 
 def pick_date(

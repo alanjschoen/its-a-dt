@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, time
 
-from datepicker.bounds import (
+from its_a_dt.bounds import (
     allowed_days,
     allowed_minutes,
     allowed_months,
