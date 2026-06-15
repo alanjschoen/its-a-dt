@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "Alan Schoen", email = "aschoen@runetech.co" },
+    { name = "Alan Schoen", email = "alanschoen@gmail.co" },
 ]
 keywords = ["cli", "date", "datetime", "time", "picker", "typer", "tui", "terminal"]
 classifiers = [
