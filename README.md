@@ -4,7 +4,7 @@ Interactive terminal date and time picker for Python CLIs. Built on [prompt_tool
 
 Navigate with arrow keys, type values directly, or combine both. Multi-step flows (date, datetime) support back navigation with backspace.
 
-![Demo](demo.gif)
+![Demo](https://raw.githubusercontent.com/alanjschoen/its-a-dt/main/demo.gif)
 
 ## Install
 
